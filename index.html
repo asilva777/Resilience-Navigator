@@ -4,15 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resilience Navigator</title>
-   <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css">
   <style>
     body {
-      font-family: 'Montserrat', sans-serif;
-      background-color: #f9fafb;
+      font-family: Montserrat, sans-serif;
       margin: 0;
-      padding: 1rem;
-      display: flex;
-      justify-content: center;
+      padding: 0;
+      background: #f4f4f4;
     }
     .card {
       background: #fff;
@@ -44,11 +42,24 @@
       background: #eef;
       border-left: 5px solid #99f;
     }
+    .visual-summary {
+      margin-top: 20px;
+    }
+    .bar {
+      height: 20px;
+      background: #99f;
+      margin-bottom: 5px;
+    }
+    .bar-label {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 <body>
   <div id="app"></div>
-
+  <canvas id="radarChart" width="400" height="300" style="display: block; margin: 0 auto;"></canvas>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const app = document.getElementById('app');
 
@@ -188,37 +199,36 @@
     function interpretScore(domain, avg) {
       const recommendations = {
         Coping: {
-        High: 'Your coping capacity is strong, indicating that you effectively manage stress and maintain stability under pressure. To sustain and enhance this strength, continue integrating practices like mindfulness, structured routines, and physical health management into your daily life. You might also explore advanced stress management techniques, such as biofeedback or resilience training programs.',
-        Moderate: 'Your coping capacity is moderate. You manage stress relatively well but could improve your ability to navigate more significant stressors. Consider incorporating techniques such as mindfulness meditation, time management strategies, and building a more organized living environment. Increasing your physical activity and engaging in regular self-care routines may also help strengthen your resilience.',
-        Low: 'Coping capacity needs development. To improve, start by building a foundation of self-awareness and emotional regulation. Try structured routines, regular physical activity, and practicing mindfulness. It might also help to establish support systems that encourage healthy coping mechanisms and allow you to reflect on stressors more effectively. Seek resources like stress management workshops or coaching to enhance your coping strategies.'
+          high: 'Your coping capacity is strong. Continue to reinforce habits like mindfulness and routine.',
+          moderate: 'Your coping skills are moderate. Strengthen regular self-care practices.',
+          low: 'You may benefit from support in building emotional awareness and stress management.'
         },
         Adaptability: {
-          High: 'You have strong adaptability, allowing you to embrace change and thrive through challenges. To continue evolving, engage in complex problem-solving scenarios and take on learning experiences that push you beyond your comfort zone. You might also explore leadership training or growth opportunities that allow you to refine your adaptability skills further.',
-          Moderate: 'You demonstrate moderate adaptability, and there’s room for improvement. To enhance this skill, focus on developing a growth mindset. Begin embracing setbacks as opportunities for growth and problem-solving. In addition, practicing creative thinking and resourcefulness in daily challenges will help you cultivate further adaptability.',
-          Low: 'Adaptability needs development. You may feel resistant to change or struggle with uncertainty. Start by challenging yourself in smaller, manageable ways to adapt to new situations. Strengthen your problem-solving skills, and engage in learning opportunities that emphasize growth and resilience. Consider taking a course or attending workshops on adaptability and overcoming resistance to change.)'
+          high: 'You have strong adaptability. Continue using challenges to grow.',
+          moderate: 'Moderate adaptability. Consider strengthening your sense of purpose.',
+          low: 'Build skills for problem-solving and seek support in transitions.'
         },
         Sensitivity: {
-          High: 'Your sensitivity to external triggers is well-regulated. You are skilled at maintaining emotional balance, even in stressful environments. Continue to nurture this skill by practicing emotional boundaries and engaging in supportive, positive social interactions. Mindfulness and emotional regulation techniques will further reinforce your ability to stay grounded in challenging situations.',
-          Moderate: 'You have moderate sensitivity reduction. While you are generally able to manage emotional triggers, there is potential for growth. Consider expanding your emotional intelligence through practices such as journaling, therapy, or connecting with a mentor. Building stronger social support networks and practicing realistic optimism can also help in reducing reactivity and fostering a more balanced emotional state.',
-          Low: 'If external stressors significantly affect you, focus on improving your emotional regulation skills. Start by identifying your emotional triggers and finding healthy ways to process them, such as through deep breathing, meditation, or talking to a trusted person. Additionally, building supportive social connections and practicing optimistic thinking will help reduce your sensitivity to stress.'
+          high: 'Your sensitivity to stress is well-regulated. Keep nurturing connections.',
+          moderate: 'Moderate regulation. Practice boundaries and optimism regularly.',
+          low: 'Work on support-seeking and emotional recovery practices.'
         },
         Exposure: {
-          High: 'You have strong exposure control and are adept at managing your environment and emotional inputs. To further build on this strength, continue setting healthy boundaries and assessing your environment to ensure it supports your well-being. Practicing self-regulation and assertive confidence in both personal and professional settings will allow you to maintain control over your exposures and energy levels.',
-          Moderate: 'Your exposure control is moderate. While you have some control over your environment, there is room for improvement in setting clear boundaries and managing external stressors. Begin by practicing more assertiveness in both personal and professional interactions. Consider setting intentional limits on your work, relationships, and social media use to protect your emotional well-being.',
-          Low: ' Exposure control needs development. You may find it difficult to regulate your environment or manage emotional inputs, leading to burnout or stress. Start by identifying areas in your life where boundaries can be set, such as in work or relationships. Practice self-regulation techniques, and assertively communicate your needs to others. Consider engaging in activities that allow you to better understand your emotional responses and energy management, like workshops on boundary-setting or stress management.'
+          high: 'You manage exposure well. Keep being intentional with your environments.',
+          moderate: 'Moderate exposure control. Tune into energy-draining settings.',
+          low: 'Reduce exposure to toxic inputs and set firm boundaries.'
         },
-        overall: {
-          High: 'You possess a high level of personal resilience and are capable of managing various life challenges effectively | Continue embracing difficult situations and seek opportunities to stretch your capabilities | Support Others Use your resilience skills to guide and support others, mentoring can reinforce your resilience | Sustain Self-Care Practices: Maintain mindfulness, exercise, and balanced living to prevent burnout | Further Personal Growth: Explore advanced resilience techniques and higher-level development courses.',
-          Moderate: 'Your resilience is at a moderate level, meaning you have a solid foundation but may face challenges in certain areas. Here’s how you can continue to enhance your resilience | Focus on Skill-Building: Identify specific areas of resilience that need attention, such as adaptability or sensitivity reduction. Work on enhancing those dimensions through targeted practices such as problem-solving exercises, mindfulness, and emotional regulation techniques | Regular Self-Assessment: Engage in self-reflection and regularly assess your emotional and physical health. Journaling, regular feedback from trusted peers or mentors, and mindfulness can help track your progress. | Expand Support Systems: Strengthen your social support by actively seeking out relationships and networks that encourage positive growth. Engage in peer groups, community-building activities, or support groups to share resilience-building strategies. Challenge Yourself Gradually: Put yourself in situations that gently push you beyond your comfort zone. Whether it’s taking on new responsibilities at wWhether it’s taking on new responsibilities at work or navigating personal challenges, gradual exposure to challenges will help build resilience over time',
-          Low: 'If your total score falls below 3.0, it indicates that resilience is an area that needs considerable development. Focus on these key steps to build your resilience | Start with Self-Awareness: Reflect on what causes stress or discomfort in your life. Understanding your emotional triggers and stressors is the first step in improving resilience. Journaling, mindfulness, and therapy can help you identify and manage these. | Build Coping Strategies: Begin by learning basic coping skills. Explore techniques such as deep breathing, progressive muscle relaxation, and grounding exercises. Building a regular routine that includes physical activity, proper nutrition, and self-care practices will also enhance your coping ability. | Develop Emotional Regulation: Focus on improving your emotional intelligence by learning how to better manage your emotions in challenging situations. Practice recognizing your emotional responses and choosing healthier ways to express and process them. | Set Boundaries and Practice Self-Regulation: Work on identifying and setting clear boundaries in your relationships and environment. This includes regulating your exposure to stressors and negative inputs (e.g., limiting exposure to stressful people or environments). | Seek Professional Support: If you’re struggling with resilience in a more persistent way, consider working with a therapist, coach, or counselor. They can help you build the skills needed to manage stress, develop emotional regulation, and foster a growth mindset.'
-.'
+        Overall: {
+          high: 'High resilience: Keep challenging yourself and support others while maintaining self-care routines.',
+          moderate: 'Moderate resilience: Focus on skill-building, expand your support network, and gradually challenge yourself.',
+          low: 'Needs development: Start with self-awareness, build coping strategies, and seek support as needed.'
         }
       };
 
       let level;
-      if (avg >= 4.0) level = 'High';
-      else if (avg >= 3.0) level = 'Moderate';
-      else level = 'Low';
+      if (avg >= 4.0) level = 'high';
+      else if (avg >= 3.0) level = 'moderate';
+      else level = 'low';
 
       return recommendations[domain][level];
     }
@@ -230,6 +240,8 @@
 
       let overallTotal = 0;
       let overallCount = 0;
+      const domainLabels = [];
+      const domainScores = [];
 
       Object.keys(responses).forEach(domain => {
         const scores = responses[domain];
@@ -237,6 +249,9 @@
         const avg = (sum / scores.length).toFixed(2);
         overallTotal += sum;
         overallCount += scores.length;
+
+        domainLabels.push(domain);
+        domainScores.push(avg);
 
         const domainResult = document.createElement('div');
         domainResult.innerHTML = `<p><strong>${domain}:</strong> Average Score = ${avg}</p>`;
@@ -258,6 +273,33 @@
 
       app.innerHTML = '';
       app.appendChild(summary);
+
+      renderRadarChart(domainLabels, domainScores);
+    }
+
+    function renderRadarChart(labels, scores) {
+      const ctx = document.getElementById('radarChart');
+      new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Resilience Domain Scores',
+            data: scores,
+            backgroundColor: 'rgba(153, 102, 255, 0.2)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          scales: {
+            r: {
+              beginAtZero: true,
+              max: 5
+            }
+          }
+        }
+      });
     }
 
     renderScreen(current);
