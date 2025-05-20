@@ -125,7 +125,7 @@
         ]
       },
       {
-        id: 'summary',
+       id: 'summary',
         title: 'Calculate My Score',
         content: '<p>Your scores and personalized recommendations will appear here after completion.</p>'
       }
@@ -198,37 +198,37 @@
 
     function interpretScore(domain, avg) {
       const recommendations = {
-        Coping: {
-          high: 'Your coping capacity is strong. Continue to reinforce habits like mindfulness and routine.',
-          moderate: 'Your coping skills are moderate. Strengthen regular self-care practices.',
-          low: 'You may benefit from support in building emotional awareness and stress management.'
+        Coping C: {
+          High: 'Your coping capacity is strong. Continue to reinforce habits like mindfulness and routine.',
+          Moderate: 'Your coping skills are moderate. Strengthen regular self-care practices.',
+          Low: 'You may benefit from support in building emotional awareness and stress management.'
         },
         Adaptability: {
-          high: 'You have strong adaptability. Continue using challenges to grow.',
-          moderate: 'Moderate adaptability. Consider strengthening your sense of purpose.',
-          low: 'Build skills for problem-solving and seek support in transitions.'
+          High: 'You have strong adaptability. Continue using challenges to grow.',
+          Moderate: 'Moderate adaptability. Consider strengthening your sense of purpose.',
+          Low: 'Build skills for problem-solving and seek support in transitions.'
         },
         Sensitivity: {
-          high: 'Your sensitivity to stress is well-regulated. Keep nurturing connections.',
-          moderate: 'Moderate regulation. Practice boundaries and optimism regularly.',
-          low: 'Work on support-seeking and emotional recovery practices.'
+          High: 'Your sensitivity to stress is well-regulated. Keep nurturing connections.',
+          Moderate: 'Moderate regulation. Practice boundaries and optimism regularly.',
+          Low: 'Work on support-seeking and emotional recovery practices.'
         },
         Exposure: {
-          high: 'You manage exposure well. Keep being intentional with your environments.',
-          moderate: 'Moderate exposure control. Tune into energy-draining settings.',
-          low: 'Reduce exposure to toxic inputs and set firm boundaries.'
+          High: 'You manage exposure well. Keep being intentional with your environments.',
+          Moderate: 'Moderate exposure control. Tune into energy-draining settings.',
+          Low: 'Reduce exposure to toxic inputs and set firm boundaries.'
         },
         Overall: {
-          high: 'High resilience: Keep challenging yourself and support others while maintaining self-care routines.',
-          moderate: 'Moderate resilience: Focus on skill-building, expand your support network, and gradually challenge yourself.',
-          low: 'Needs development: Start with self-awareness, build coping strategies, and seek support as needed.'
+          High: 'High resilience: Keep challenging yourself and support others while maintaining self-care routines.',
+          Moderate: 'Moderate resilience: Focus on skill-building, expand your support network, and gradually challenge yourself.',
+          Low: 'Needs development: Start with self-awareness, build coping strategies, and seek support as needed.'
         }
       };
 
       let level;
-      if (avg >= 4.0) level = 'high';
-      else if (avg >= 3.0) level = 'moderate';
-      else level = 'low';
+      if (avg >= 4.0) level = 'High';
+      else if (avg >= 3.0) level = 'Moderate';
+      else level = 'Low';
 
       return recommendations[domain][level];
     }
