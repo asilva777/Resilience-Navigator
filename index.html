@@ -1,10 +1,11 @@
+<!-- Completed version of the Resilience Navigator code with corrections and full rendering logic -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resilience Navigator</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
       font-family: Montserrat, sans-serif;
@@ -42,9 +43,6 @@
       background: #eef;
       border-left: 5px solid #99f;
     }
-    .visual-summary {
-      margin-top: 20px;
-    }
     .bar {
       height: 20px;
       background: #99f;
@@ -62,7 +60,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     const app = document.getElementById('app');
-
     const screens = [
       {
         id: 'intro',
@@ -74,10 +71,10 @@
           <p>This is not a diagnosis. For professional help, click <a href='https://aiwaapp.ai/site/12436/book-appointment' target='_blank'>HERE</a>.</p>
           <p>View our <a href='https://aiwaapp.ai/site/12436/privacy-policy' target='_blank'>Privacy Policy</a></p>
           <div class="question">
-            <label>Full Name: <input type="text" id="name"></label><br><br>
-            <label>Contact Number: <input type="text" id="contact"></label><br><br>
-            <label>Email Address: <input type="email" id="email"></label><br><br>
-            <label>Date of Self-Assessment: <input type="date" id="date"></label>
+            <label>Full Name: <input type="text" id="name" /></label><br /><br />
+            <label>Contact Number: <input type="text" id="contact" /></label><br /><br />
+            <label>Email Address: <input type="email" id="email" /></label><br /><br />
+            <label>Date of Self-Assessment: <input type="date" id="date" /></label>
           </div>`
       },
       {
@@ -125,7 +122,7 @@
         ]
       },
       {
-       id: 'summary',
+        id: 'summary',
         title: 'Calculate My Score',
         content: '<p>Your scores and personalized recommendations will appear here after completion.</p>'
       }
@@ -137,10 +134,8 @@
     function renderScreen(index) {
       const screen = screens[index];
       app.innerHTML = '';
-
       const card = document.createElement('div');
       card.className = 'card';
-
       const title = document.createElement('h2');
       title.innerText = screen.title;
       card.appendChild(title);
@@ -155,9 +150,10 @@
         screen.questions.forEach((question, i) => {
           const qDiv = document.createElement('div');
           qDiv.className = 'question';
-          qDiv.innerHTML = `<label>${question}</label><br>
+          qDiv.innerHTML = `
+            <label>${question}</label><br />
             ${[1, 2, 3, 4, 5].map(score => `
-              <label><input type="radio" name="${screen.id}_${i}" value="${score}"> ${score}</label>
+              <label><input type="radio" name="${screen.id}_${i}" value="${score}" /> ${score}</label>
             `).join(' ')}
           `;
           card.appendChild(qDiv);
@@ -183,7 +179,6 @@
             responses[screen.id].push(val ? parseInt(val.value) : 0);
           });
         }
-
         if (index === screens.length - 1) {
           showResults();
         } else {
@@ -191,14 +186,13 @@
         }
       };
       nav.appendChild(next);
-
       card.appendChild(nav);
       app.appendChild(card);
     }
 
     function interpretScore(domain, avg) {
       const recommendations = {
-        Coping C: {
+        Coping: {
           High: 'Your coping capacity is strong. Continue to reinforce habits like mindfulness and routine.',
           Moderate: 'Your coping skills are moderate. Strengthen regular self-care practices.',
           Low: 'You may benefit from support in building emotional awareness and stress management.'
@@ -225,11 +219,7 @@
         }
       };
 
-      let level;
-      if (avg >= 4.0) level = 'High';
-      else if (avg >= 3.0) level = 'Moderate';
-      else level = 'Low';
-
+      let level = avg >= 4 ? 'High' : avg >= 3 ? 'Moderate' : 'Low';
       return recommendations[domain][level];
     }
 
@@ -239,63 +229,52 @@
       summary.innerHTML = '<h2>Your Results</h2>';
 
       let overallTotal = 0;
-      let overallCount = 0;
-      const domainLabels = [];
-      const domainScores = [];
+      let domainAverages = [];
+      const labels = ['Coping', 'Adaptability', 'Sensitivity', 'Exposure'];
 
-      Object.keys(responses).forEach(domain => {
-        const scores = responses[domain];
-        const sum = scores.reduce((a, b) => a + b, 0);
-        const avg = (sum / scores.length).toFixed(2);
-        overallTotal += sum;
-        overallCount += scores.length;
+      labels.forEach(label => {
+        const scores = responses[label.toLowerCase()] || [];
+        const avg = scores.reduce((a, b) => a + b, 0) / scores.length || 0;
+        overallTotal += avg;
+        domainAverages.push(avg);
 
-        domainLabels.push(domain);
-        domainScores.push(avg);
+        const domainTitle = document.createElement('h3');
+        domainTitle.innerText = label;
+        summary.appendChild(domainTitle);
 
-        const domainResult = document.createElement('div');
-        domainResult.innerHTML = `<p><strong>${domain}:</strong> Average Score = ${avg}</p>`;
         const rec = document.createElement('div');
         rec.className = 'recommendation';
-        rec.innerText = interpretScore(domain, avg);
-        domainResult.appendChild(rec);
-        summary.appendChild(domainResult);
+        rec.innerText = interpretScore(label, avg);
+        summary.appendChild(rec);
       });
 
-      const totalAvg = (overallTotal / overallCount).toFixed(2);
-      const totalResult = document.createElement('div');
-      totalResult.innerHTML = `<p><strong>Overall Average Score: ${totalAvg}</strong></p>`;
-      const rec = document.createElement('div');
-      rec.className = 'recommendation';
-      rec.innerText = interpretScore('overall', totalAvg);
-      totalResult.appendChild(rec);
-      summary.appendChild(totalResult);
+      const overallAvg = overallTotal / labels.length;
+      const overallRec = document.createElement('div');
+      overallRec.className = 'recommendation';
+      overallRec.innerHTML = `<strong>Overall Resilience:</strong> ${interpretScore('Overall', overallAvg)}`;
+      summary.appendChild(overallRec);
 
       app.innerHTML = '';
       app.appendChild(summary);
 
-      renderRadarChart(domainLabels, domainScores);
-    }
-
-    function renderRadarChart(labels, scores) {
-      const ctx = document.getElementById('radarChart');
-      new Chart(ctx, {
+      new Chart(document.getElementById('radarChart'), {
         type: 'radar',
         data: {
           labels: labels,
           datasets: [{
-            label: 'Resilience Domain Scores',
-            data: scores,
-            backgroundColor: 'rgba(153, 102, 255, 0.2)',
-            borderColor: 'rgba(153, 102, 255, 1)',
-            borderWidth: 2
+            label: 'Resilience Scores',
+            data: domainAverages,
+            fill: true,
+            backgroundColor: 'rgba(153, 153, 255, 0.2)',
+            borderColor: '#99f',
+            pointBackgroundColor: '#99f'
           }]
         },
         options: {
           scales: {
             r: {
-              beginAtZero: true,
-              max: 5
+              suggestedMin: 1,
+              suggestedMax: 5
             }
           }
         }
