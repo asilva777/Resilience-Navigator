@@ -89,22 +89,27 @@
 </head>
 <body>
   <div class="container">
-    <div class="card" id="ExposureCard">
-      <h2>Exposure</h2>
-      <form id="ExposureForm"></form>
-      <div class="recommendation" id="ExposureRec">Answer questions above and click Submit.</div>
-    </div>
-    <div class="card" id="SensitivityCard">
-      <h2>Sensitivity</h2>
-      <form id="SensitivityForm"></form>
-      <div class="recommendation" id="SensitivityRec">Answer questions above and click Submit.</div>
-    </div>
     <div class="card" id="CopingCard">
       <h2>Coping</h2>
       <form id="CopingForm"></form>
       <div class="recommendation" id="CopingRec">Answer questions above and click Submit.</div>
     </div>
   </div>
+  <div class="card" id="ExposureCard">
+      <h2>Exposure</h2>
+      <form id="ExposureForm"></form>
+      <div class="recommendation" id="ExposureRec">Answer questions above and click Submit.</div>
+    </div>
+   <div class="card" id="AdaptabilityCard">
+      <h2>Adaptability</h2>
+      <form id="SensitivityForm"></form>
+      <div class="recommendation" id="AdaptabilityRec">Answer questions above and click Submit.</div>
+    </div>
+   <div class="card" id="SensitivityCard">
+      <h2>Sensitivity</h2>
+      <form id="SensitivityForm"></form>
+      <div class="recommendation" id="SensitivityRec">Answer questions above and click Submit.</div>
+    </div>
   <div style="text-align:center; width:100%; margin-top:1rem;">
     <button onclick="submitAll()">Submit Assessment</button>
   </div>
@@ -112,32 +117,33 @@
   <script>
     // Questions per dimension
     const questions = {
-      Exposure: [
-        "How often are you exposed to environments where substance use is prevalent (e.g., parties, bars, social gatherings)?",
-        "Are there substances easily accessible in your community or social circles?",
-        "Have you witnessed substance use among family members or close friends?",
-        "Do your friends or peers encourage or pressure you to use substances?",
-        "How often do you spend time with individuals who use substances?",
-        "How frequently do you encounter advertisements or media content promoting substance use?",
-        "Do you follow social media accounts or influencers who promote substance use?"
+      Coping: [
+        "I am aware of my emotions and can name what I feel.",	
+        "I maintain daily routines that help me stay organized and calm.",
+        "I take care of my physical health through rest, nutrition, or exercise.",
+        "I can shift perspectives or reframe stressful events.",
+        "I use mindfulness or grounding techniques to manage stress."
+        ],
+      Adaptability: [
+        "I have a clear sense of purpose or meaning in my life.",
+        "I can find solutions when problems arise, even under pressure.",	
+        "I believe I can improve through learning and effort.",
+        "I can identify or access tools and resources to support my growth.",
+        "I view challenges as opportunities to learn and grow."
       ],
       Sensitivity: [
-        "How often do you experience feelings of stress, anxiety, or depression?",
-        "Do you find it difficult to manage your emotions without resorting to substances?",
-        "Do you have a strong support system of family and friends who can help you cope with challenges?",
-        "How often do you feel isolated or lonely?",
-        "Have you experienced any traumatic events in your life that you feel impact your current emotional state?",
-        "Do you find it challenging to cope with memories or feelings related to past trauma?"
+        "I reach out to supportive people when I need help.",
+        "I maintain hope even when things are difficult.",	
+        "I feel connected to something larger than myself (community, nature, faith, etc.).",
+        "I know how to set emotional boundaries with people or situations.",
+        "I recover emotionally after being exposed to stressful interactions."
       ],
-      Coping: [
-        "How often do you find it difficult to control your impulses or cravings for substances?",
-        "Do you struggle with maintaining healthy habits and routines?",
-        "Do you have any physical health issues that you feel contribute to your vulnerability to substance use?",
-        "How often do you engage in activities that promote physical well-being (e.g., exercise, healthy eating)?",
-        "How often do you practice mindfulness or other techniques to manage stress and improve mental clarity?",
-        "Do you find it difficult to adapt to changes or challenges in your life?",
-        "Do you feel that your living environment is organized and conducive to healthy living?",
-        "How often do you feel overwhelmed by your daily responsibilities and tasks?"
+        Exposure: [
+        "I can regulate my reactions when faced with emotionally intense situations.",
+        "I can recognize when my energy is being drained and take steps to recharge."
+        "I speak up or say "no" when something doesn’t feel right.",
+        "I adjust or avoid environments that negatively affect my well-being.",
+        "I make intentional choices about what media or content I consume."
       ]
     };
 
@@ -231,6 +237,9 @@ function submitAll() {
   const overallRec = getOverallInterpretation(overallAvg);
   document.getElementById('OverallInterpretation').textContent = overallRec;
 
+  document.getElementById('ExposureCard').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('AdaptabilityCard').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('SensitivityCard').scrollIntoView({ behavior: 'smooth' });
   document.getElementById('ExposureCard').scrollIntoView({ behavior: 'smooth' });
 }
 </body>
