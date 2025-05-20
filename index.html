@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Resilience Navigator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+   <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Montserrat', sans-serif;
@@ -14,233 +14,253 @@
       display: flex;
       justify-content: center;
     }
-    .container {
-      max-width: 1200px;
-      width: 100%;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      justify-content: center;
-    }
     .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.12);
-      flex: 1 1 300px;
-      padding: 1.5rem;
+      background: #fff;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 600px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .hidden {
+      display: none;
+    }
+    h2, p {
+      margin-top: 0;
+    }
+    .question {
+      margin-bottom: 20px;
+    }
+    .navigation {
       display: flex;
-      flex-direction: column;
-      max-width: 350px;
+      justify-content: space-between;
     }
-    h2 {
-      color: #2c3e50;
-      margin-bottom: 1rem;
-      font-weight: 700;
-    }
-    label {
-      margin-top: 0.75rem;
-      margin-bottom: 0.25rem;
-      font-weight: 600;
-      color: #34495e;
-    }
-    select {
-      width: 100%;
-      padding: 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-      font-family: 'Montserrat', sans-serif;
+    .navigation button {
+      padding: 10px 20px;
     }
     .recommendation {
-      margin-top: 1rem;
-      background: #e8f1ff;
-      border-left: 5px solid #2980b9;
-      padding: 1rem;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      color: #1a3d7c;
-      min-height: 60px;
-    }
-    button {
-      margin-top: auto;
-      padding: 1rem;
-      border: none;
-      border-radius: 8px;
-      background-color: #2980b9;
-      color: white;
-      font-weight: 700;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #1a5276;
-    }
-    @media (max-width: 600px) {
-      .container {
-        flex-direction: column;
-        align-items: center;
-      }
-      .card {
-        max-width: 90vw;
-      }
+      margin-top: 10px;
+      padding: 10px;
+      background: #eef;
+      border-left: 5px solid #99f;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card" id="CopingCard">
-      <h2>Coping</h2>
-      <form id="CopingForm"></form>
-      <div class="recommendation" id="CopingRec">Answer questions above and click Submit.</div>
-    </div>
-  </div>
-  <div class="card" id="ExposureCard">
-      <h2>Exposure</h2>
-      <form id="ExposureForm"></form>
-      <div class="recommendation" id="ExposureRec">Answer questions above and click Submit.</div>
-    </div>
-   <div class="card" id="AdaptabilityCard">
-      <h2>Adaptability</h2>
-      <form id="SensitivityForm"></form>
-      <div class="recommendation" id="AdaptabilityRec">Answer questions above and click Submit.</div>
-    </div>
-   <div class="card" id="SensitivityCard">
-      <h2>Sensitivity</h2>
-      <form id="SensitivityForm"></form>
-      <div class="recommendation" id="SensitivityRec">Answer questions above and click Submit.</div>
-    </div>
-  <div style="text-align:center; width:100%; margin-top:1rem;">
-    <button onclick="submitAll()">Submit Assessment</button>
-  </div>
+  <div id="app"></div>
 
   <script>
-    // Questions per dimension
-    const questions = {
-      Coping: [
-        "I am aware of my emotions and can name what I feel.",	
-        "I maintain daily routines that help me stay organized and calm.",
-        "I take care of my physical health through rest, nutrition, or exercise.",
-        "I can shift perspectives or reframe stressful events.",
-        "I use mindfulness or grounding techniques to manage stress."
-        ],
-      Adaptability: [
-        "I have a clear sense of purpose or meaning in my life.",
-        "I can find solutions when problems arise, even under pressure.",	
-        "I believe I can improve through learning and effort.",
-        "I can identify or access tools and resources to support my growth.",
-        "I view challenges as opportunities to learn and grow."
-      ],
-      Sensitivity: [
-        "I reach out to supportive people when I need help.",
-        "I maintain hope even when things are difficult.",	
-        "I feel connected to something larger than myself (community, nature, faith, etc.).",
-        "I know how to set emotional boundaries with people or situations.",
-        "I recover emotionally after being exposed to stressful interactions."
-      ],
-        Exposure: [
-        "I can regulate my reactions when faced with emotionally intense situations.",
-        "I can recognize when my energy is being drained and take steps to recharge."
-        "I speak up or say "no" when something doesn’t feel right.",
-        "I adjust or avoid environments that negatively affect my well-being.",
-        "I make intentional choices about what media or content I consume."
-      ]
-    };
+    const app = document.getElementById('app');
 
-    // Generate select options
-    const optionsHTML = `
-      <option value="1">1 - Strongly Disagree</option>
-      <option value="2">2 - Disagree</option>
-      <option value="3">3 - Neutral</option>
-      <option value="4">4 - Agree</option>
-      <option value="5">5 - Strongly Agree</option>
-    `;
+    const screens = [
+      {
+        id: 'intro',
+        title: 'Resilience Navigator',
+        content: `
+          <p>Assess and enhance your personal resilience. Rate each statement below based on how true it has been for you in the past month.</p>
+          <p>This tool covers the four CASE domains: Coping Capacity, Adaptability, Sensitivity Reduction, and Exposure Control.</p>
+          <p><strong>Scoring:</strong> 1 = Strongly Disagree | 5 = Strongly Agree</p>
+          <p>This is not a diagnosis. For professional help, click <a href='https://aiwaapp.ai/site/12436/book-appointment' target='_blank'>HERE</a>.</p>
+          <p>View our <a href='https://aiwaapp.ai/site/12436/privacy-policy' target='_blank'>Privacy Policy</a></p>
+          <div class="question">
+            <label>Full Name: <input type="text" id="name"></label><br><br>
+            <label>Contact Number: <input type="text" id="contact"></label><br><br>
+            <label>Email Address: <input type="email" id="email"></label><br><br>
+            <label>Date of Self-Assessment: <input type="date" id="date"></label>
+          </div>`
+      },
+      {
+        id: 'coping',
+        title: 'Coping Capacity',
+        questions: [
+          'I am aware of my emotions and can name what I feel.',
+          'I maintain daily routines that help me stay organized and calm.',
+          'I take care of my physical health through rest, nutrition, or exercise.',
+          'I can shift perspectives or reframe stressful events.',
+          'I use mindfulness or grounding techniques to manage stress.'
+        ]
+      },
+      {
+        id: 'adaptability',
+        title: 'Adaptability',
+        questions: [
+          'I have a clear sense of purpose or meaning in my life.',
+          'I can find solutions when problems arise, even under pressure.',
+          'I believe I can improve through learning and effort.',
+          'I can identify or access tools and resources to support my growth.',
+          'I view challenges as opportunities to learn and grow.'
+        ]
+      },
+      {
+        id: 'sensitivity',
+        title: 'Sensitivity Reduction',
+        questions: [
+          'I reach out to supportive people when I need help.',
+          'I maintain hope even when things are difficult.',
+          'I feel connected to something larger than myself.',
+          'I know how to set emotional boundaries.',
+          'I recover emotionally after stressful interactions.'
+        ]
+      },
+      {
+        id: 'exposure',
+        title: 'Exposure Control',
+        questions: [
+          'I can regulate my reactions when faced with emotionally intense situations.',
+          'I can recognize when my energy is being drained.',
+          'I speak up or say "no" when something doesn’t feel right.',
+          'I adjust or avoid environments that negatively affect my well-being.',
+          'I make intentional choices about media or content I consume.'
+        ]
+      },
+      {
+        id: 'summary',
+        title: 'Calculate My Score',
+        content: '<p>Your scores and personalized recommendations will appear here after completion.</p>'
+      }
+    ];
 
-    // Render questions in each card form
-    Object.entries(questions).forEach(([category, qs]) => {
-      const form = document.getElementById(`${category}Form`);
-      qs.forEach((q, i) => {
-        const id = `${category}_${i}`;
-        const label = document.createElement('label');
-        label.setAttribute('for', id);
-        label.textContent = q;
-        const select = document.createElement('select');
-        select.id = id;
-        select.name = id;
-        select.innerHTML = optionsHTML;
-        form.appendChild(label);
-        form.appendChild(select);
+    let current = 0;
+    const responses = {};
+
+    function renderScreen(index) {
+      const screen = screens[index];
+      app.innerHTML = '';
+
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const title = document.createElement('h2');
+      title.innerText = screen.title;
+      card.appendChild(title);
+
+      if (screen.content) {
+        const content = document.createElement('div');
+        content.innerHTML = screen.content;
+        card.appendChild(content);
+      }
+
+      if (screen.questions) {
+        screen.questions.forEach((question, i) => {
+          const qDiv = document.createElement('div');
+          qDiv.className = 'question';
+          qDiv.innerHTML = `<label>${question}</label><br>
+            ${[1, 2, 3, 4, 5].map(score => `
+              <label><input type="radio" name="${screen.id}_${i}" value="${score}"> ${score}</label>
+            `).join(' ')}
+          `;
+          card.appendChild(qDiv);
+        });
+      }
+
+      const nav = document.createElement('div');
+      nav.className = 'navigation';
+      if (index > 0) {
+        const prev = document.createElement('button');
+        prev.innerText = 'Previous';
+        prev.onclick = () => renderScreen(index - 1);
+        nav.appendChild(prev);
+      }
+
+      const next = document.createElement('button');
+      next.innerText = index === screens.length - 1 ? 'Submit' : 'Next';
+      next.onclick = () => {
+        if (screen.questions) {
+          responses[screen.id] = [];
+          screen.questions.forEach((_, i) => {
+            const val = document.querySelector(`input[name='${screen.id}_${i}']:checked`);
+            responses[screen.id].push(val ? parseInt(val.value) : 0);
+          });
+        }
+
+        if (index === screens.length - 1) {
+          showResults();
+        } else {
+          renderScreen(index + 1);
+        }
+      };
+      nav.appendChild(next);
+
+      card.appendChild(nav);
+      app.appendChild(card);
+    }
+
+    function interpretScore(domain, avg) {
+      const recommendations = {
+        Coping: {
+        High: 'Your coping capacity is strong, indicating that you effectively manage stress and maintain stability under pressure. To sustain and enhance this strength, continue integrating practices like mindfulness, structured routines, and physical health management into your daily life. You might also explore advanced stress management techniques, such as biofeedback or resilience training programs.',
+        Moderate: 'Your coping capacity is moderate. You manage stress relatively well but could improve your ability to navigate more significant stressors. Consider incorporating techniques such as mindfulness meditation, time management strategies, and building a more organized living environment. Increasing your physical activity and engaging in regular self-care routines may also help strengthen your resilience.',
+        Low: 'Coping capacity needs development. To improve, start by building a foundation of self-awareness and emotional regulation. Try structured routines, regular physical activity, and practicing mindfulness. It might also help to establish support systems that encourage healthy coping mechanisms and allow you to reflect on stressors more effectively. Seek resources like stress management workshops or coaching to enhance your coping strategies.'
+        },
+        Adaptability: {
+          High: 'You have strong adaptability, allowing you to embrace change and thrive through challenges. To continue evolving, engage in complex problem-solving scenarios and take on learning experiences that push you beyond your comfort zone. You might also explore leadership training or growth opportunities that allow you to refine your adaptability skills further.',
+          Moderate: 'You demonstrate moderate adaptability, and there’s room for improvement. To enhance this skill, focus on developing a growth mindset. Begin embracing setbacks as opportunities for growth and problem-solving. In addition, practicing creative thinking and resourcefulness in daily challenges will help you cultivate further adaptability.',
+          Low: 'Adaptability needs development. You may feel resistant to change or struggle with uncertainty. Start by challenging yourself in smaller, manageable ways to adapt to new situations. Strengthen your problem-solving skills, and engage in learning opportunities that emphasize growth and resilience. Consider taking a course or attending workshops on adaptability and overcoming resistance to change.)'
+        },
+        Sensitivity: {
+          High: 'Your sensitivity to external triggers is well-regulated. You are skilled at maintaining emotional balance, even in stressful environments. Continue to nurture this skill by practicing emotional boundaries and engaging in supportive, positive social interactions. Mindfulness and emotional regulation techniques will further reinforce your ability to stay grounded in challenging situations.',
+          Moderate: 'You have moderate sensitivity reduction. While you are generally able to manage emotional triggers, there is potential for growth. Consider expanding your emotional intelligence through practices such as journaling, therapy, or connecting with a mentor. Building stronger social support networks and practicing realistic optimism can also help in reducing reactivity and fostering a more balanced emotional state.',
+          Low: 'If external stressors significantly affect you, focus on improving your emotional regulation skills. Start by identifying your emotional triggers and finding healthy ways to process them, such as through deep breathing, meditation, or talking to a trusted person. Additionally, building supportive social connections and practicing optimistic thinking will help reduce your sensitivity to stress.'
+        },
+        Exposure: {
+          High: 'You have strong exposure control and are adept at managing your environment and emotional inputs. To further build on this strength, continue setting healthy boundaries and assessing your environment to ensure it supports your well-being. Practicing self-regulation and assertive confidence in both personal and professional settings will allow you to maintain control over your exposures and energy levels.',
+          Moderate: 'Your exposure control is moderate. While you have some control over your environment, there is room for improvement in setting clear boundaries and managing external stressors. Begin by practicing more assertiveness in both personal and professional interactions. Consider setting intentional limits on your work, relationships, and social media use to protect your emotional well-being.',
+          Low: ' Exposure control needs development. You may find it difficult to regulate your environment or manage emotional inputs, leading to burnout or stress. Start by identifying areas in your life where boundaries can be set, such as in work or relationships. Practice self-regulation techniques, and assertively communicate your needs to others. Consider engaging in activities that allow you to better understand your emotional responses and energy management, like workshops on boundary-setting or stress management.'
+        },
+        overall: {
+          High: 'You possess a high level of personal resilience and are capable of managing various life challenges effectively | Continue embracing difficult situations and seek opportunities to stretch your capabilities | Support Others Use your resilience skills to guide and support others, mentoring can reinforce your resilience | Sustain Self-Care Practices: Maintain mindfulness, exercise, and balanced living to prevent burnout | Further Personal Growth: Explore advanced resilience techniques and higher-level development courses.',
+          Moderate: 'Your resilience is at a moderate level, meaning you have a solid foundation but may face challenges in certain areas. Here’s how you can continue to enhance your resilience | Focus on Skill-Building: Identify specific areas of resilience that need attention, such as adaptability or sensitivity reduction. Work on enhancing those dimensions through targeted practices such as problem-solving exercises, mindfulness, and emotional regulation techniques | Regular Self-Assessment: Engage in self-reflection and regularly assess your emotional and physical health. Journaling, regular feedback from trusted peers or mentors, and mindfulness can help track your progress. | Expand Support Systems: Strengthen your social support by actively seeking out relationships and networks that encourage positive growth. Engage in peer groups, community-building activities, or support groups to share resilience-building strategies. Challenge Yourself Gradually: Put yourself in situations that gently push you beyond your comfort zone. Whether it’s taking on new responsibilities at wWhether it’s taking on new responsibilities at work or navigating personal challenges, gradual exposure to challenges will help build resilience over time',
+          Low: 'If your total score falls below 3.0, it indicates that resilience is an area that needs considerable development. Focus on these key steps to build your resilience | Start with Self-Awareness: Reflect on what causes stress or discomfort in your life. Understanding your emotional triggers and stressors is the first step in improving resilience. Journaling, mindfulness, and therapy can help you identify and manage these. | Build Coping Strategies: Begin by learning basic coping skills. Explore techniques such as deep breathing, progressive muscle relaxation, and grounding exercises. Building a regular routine that includes physical activity, proper nutrition, and self-care practices will also enhance your coping ability. | Develop Emotional Regulation: Focus on improving your emotional intelligence by learning how to better manage your emotions in challenging situations. Practice recognizing your emotional responses and choosing healthier ways to express and process them. | Set Boundaries and Practice Self-Regulation: Work on identifying and setting clear boundaries in your relationships and environment. This includes regulating your exposure to stressors and negative inputs (e.g., limiting exposure to stressful people or environments). | Seek Professional Support: If you’re struggling with resilience in a more persistent way, consider working with a therapist, coach, or counselor. They can help you build the skills needed to manage stress, develop emotional regulation, and foster a growth mindset.'
+.'
+        }
+      };
+
+      let level;
+      if (avg >= 4.0) level = 'High';
+      else if (avg >= 3.0) level = 'Moderate';
+      else level = 'Low';
+
+      return recommendations[domain][level];
+    }
+
+    function showResults() {
+      const summary = document.createElement('div');
+      summary.className = 'card';
+      summary.innerHTML = '<h2>Your Results</h2>';
+
+      let overallTotal = 0;
+      let overallCount = 0;
+
+      Object.keys(responses).forEach(domain => {
+        const scores = responses[domain];
+        const sum = scores.reduce((a, b) => a + b, 0);
+        const avg = (sum / scores.length).toFixed(2);
+        overallTotal += sum;
+        overallCount += scores.length;
+
+        const domainResult = document.createElement('div');
+        domainResult.innerHTML = `<p><strong>${domain}:</strong> Average Score = ${avg}</p>`;
+        const rec = document.createElement('div');
+        rec.className = 'recommendation';
+        rec.innerText = interpretScore(domain, avg);
+        domainResult.appendChild(rec);
+        summary.appendChild(domainResult);
       });
-    });
-<!-- Add an overall resilience summary card below dimension cards -->
-<div class="card" id="OverallResilienceCard" style="max-width: 100%; margin-top: 2rem;">
-  <h2>Overall Resilience Summary</h2>
-  <div id="OverallInterpretation" class="recommendation">
-    Complete the assessment above and click Submit to see your overall resilience interpretation.
-  </div>
-</div>
 
-// Update getRecommendation for dimension scores (you can further customize per dimension later)
-function getDimensionRecommendation(category, avg) {
-  if (avg >= 4) {
-    return `High vulnerability in ${category}. Personalized Recommendation: Continue strengthening your resilience by engaging in advanced strategies such as mentoring others, practicing mindfulness, and sustained self-care.`;
-  } else if (avg >= 2.5) {
-    return `Moderate risk in ${category}. Focus on skill-building like mindfulness, problem-solving, and gradually challenging yourself in this area.`;
-  } else {
-    return `Low resilience in ${category}. Start with self-awareness, basic coping strategies, emotional regulation, and seek support if needed.`;
-  }
-}
+      const totalAvg = (overallTotal / overallCount).toFixed(2);
+      const totalResult = document.createElement('div');
+      totalResult.innerHTML = `<p><strong>Overall Average Score: ${totalAvg}</strong></p>`;
+      const rec = document.createElement('div');
+      rec.className = 'recommendation';
+      rec.innerText = interpretScore('overall', totalAvg);
+      totalResult.appendChild(rec);
+      summary.appendChild(totalResult);
 
-// Overall resilience interpretation based on total average score
-function getOverallInterpretation(score) {
-  if (score >= 4.0) {
-    return `High: You possess a high level of personal resilience and are capable of managing various life challenges effectively. 
-    Keep Challenging Yourself: Continue embracing difficult situations and seek opportunities to stretch your capabilities.
-    Support Others: Use your resilience skills to guide and support others, mentoring can reinforce your resilience.
-    Sustain Self-Care Practices: Maintain mindfulness, exercise, and balanced living to prevent burnout.
-    Further Personal Growth: Explore advanced resilience techniques and higher-level development courses.`;
-  } else if (score >= 3.0) {
-    return `Moderate: Your resilience is at a moderate level with a solid foundation but some areas need attention.
-    Focus on Skill-Building: Target specific resilience dimensions with problem-solving and emotional regulation.
-    Regular Self-Assessment: Use journaling and feedback to track progress.
-    Expand Support Systems: Strengthen your social networks and engage in community activities.
-    Challenge Yourself Gradually: Take on new responsibilities and personal challenges at a comfortable pace.`;
-  } else {
-    return `Needs Development: Your resilience needs considerable improvement.
-    Start with Self-Awareness: Reflect on stress triggers via journaling and mindfulness.
-    Build Coping Strategies: Learn deep breathing, grounding, and create routines for physical and emotional care.
-    Develop Emotional Regulation: Practice recognizing and managing emotions healthily.
-    Set Boundaries and Self-Regulate: Manage exposure to stressors and negative environments.
-    Seek Professional Support: Consider therapy or coaching for persistent challenges.`;
-  }
-}
+      app.innerHTML = '';
+      app.appendChild(summary);
+    }
 
-// On submit, calculate dimension averages and overall average
-function submitAll() {
-  let totalSum = 0;
-  let totalCount = 0;
-
-  Object.entries(questions).forEach(([category, qs]) => {
-    let sum = 0;
-    qs.forEach((_, i) => {
-      const val = parseInt(document.getElementById(`${category}_${i}`).value);
-      sum += val;
-      totalSum += val;
-      totalCount++;
-    });
-    const avg = sum / qs.length;
-    const rec = getDimensionRecommendation(category, avg);
-    document.getElementById(`${category}Rec`).textContent = rec;
-  });
-
-  const overallAvg = totalSum / totalCount;
-  const overallRec = getOverallInterpretation(overallAvg);
-  document.getElementById('OverallInterpretation').textContent = overallRec;
-
-  document.getElementById('ExposureCard').scrollIntoView({ behavior: 'smooth' });
-  document.getElementById('AdaptabilityCard').scrollIntoView({ behavior: 'smooth' });
-  document.getElementById('SensitivityCard').scrollIntoView({ behavior: 'smooth' });
-  document.getElementById('ExposureCard').scrollIntoView({ behavior: 'smooth' });
-}
+    renderScreen(current);
+  </script>
 </body>
 </html>
