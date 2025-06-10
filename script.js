@@ -1,0 +1,429 @@
+// Accessibility: Focus management helper
+function setFocusToFirstInput() {
+  const firstInput = document.querySelector('input:not([type=radio]):not([type=checkbox])');
+  if (firstInput) firstInput.focus();
+}
+
+const app = document.getElementById('app');
+let chartInstance = null;
+let userConsent = false;
+
+// Step indicators for progress bar
+const screens = [
+  {
+    id: 'intro',
+    title: 'Resilience Navigator',
+    content: `
+      <p>Assess and enhance your personal resilience. Rate each statement below based on how true it has been for you in the past month.</p>
+      <p>This tool covers the four CASE domains: Coping Capacity, Adaptability, Sensitivity Reduction, and Exposure Control.</p>
+      <p><strong>Scoring:</strong> 1 = Strongly Disagree | 5 = Strongly Agree</p>
+      <p>This is not a diagnosis. For professional help, click <a href='https://aiwaapp.ai/site/12436/book-appointment' target='_blank' rel="noopener">HERE</a>.</p>
+      <p>View our <a href='https://aiwaapp.ai/site/12436/privacy-policy' target='_blank' rel="noopener">Privacy Policy</a></p>
+      <div class="question">
+        <label for="name">Full Name:</label>
+        <input type="text" id="name" name="name" autocomplete="name" required minlength="2" aria-required="true" />
+        <label for="contact">Contact Number:</label>
+        <input type="text" id="contact" name="contact" pattern="^\\+?[0-9\\-\\s]{7,15}$" required aria-required="true" autocomplete="tel" />
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" name="email" autocomplete="email" required aria-required="true" />
+        <label for="date">Date of Self-Assessment:</label>
+        <input type="date" id="date" name="date" required aria-required="true" />
+        <div>
+          <input type="checkbox" id="consent" name="consent" required aria-required="true" />
+          <label for="consent">I consent to the processing of my data as described in the Privacy Policy.</label>
+        </div>
+        <div id="formError" class="error-message" role="alert" aria-live="polite"></div>
+      </div>`
+  },
+  {
+    id: 'coping',
+    title: 'Coping Capacity',
+    questions: [
+      'I am aware of my emotions and can name what I feel.',
+      'I maintain daily routines that help me stay organized and calm.',
+      'I take care of my physical health through rest, nutrition, or exercise.',
+      'I can shift perspectives or reframe stressful events.',
+      'I use mindfulness or grounding techniques to manage stress.'
+    ]
+  },
+  {
+    id: 'adaptability',
+    title: 'Adaptability',
+    questions: [
+      'I have a clear sense of purpose or meaning in my life.',
+      'I can find solutions when problems arise, even under pressure.',
+      'I believe I can improve through learning and effort.',
+      'I can identify or access tools and resources to support my growth.',
+      'I view challenges as opportunities to learn and grow.'
+    ]
+  },
+  {
+    id: 'sensitivity',
+    title: 'Sensitivity Reduction',
+    questions: [
+      'I reach out to supportive people when I need help.',
+      'I maintain hope even when things are difficult.',
+      'I feel connected to something larger than myself.',
+      'I know how to set emotional boundaries.',
+      'I recover emotionally after stressful interactions.'
+    ]
+  },
+  {
+    id: 'exposure',
+    title: 'Exposure Control',
+    questions: [
+      'I can regulate my reactions when faced with emotionally intense situations.',
+      'I can recognize when my energy is being drained.',
+      'I speak up or say "no" when something doesn’t feel right.',
+      'I adjust or avoid environments that negatively affect my well-being.',
+      'I make intentional choices about media or content I consume.'
+    ]
+  },
+  {
+    id: 'summary',
+    title: 'Calculate My Score',
+    content: '<p>Your scores and personalized recommendations will appear here after completion.</p>'
+  }
+];
+
+let current = 0;
+let responses = JSON.parse(localStorage.getItem('rnavigator_responses') || '{}') || {};
+
+function updateProgressBar(index) {
+  const total = screens.length - 1; // exclude summary
+  const percent = Math.min(100, Math.round((index / total) * 100));
+  let progressBar = document.getElementById('progressBar');
+  if (!progressBar) {
+    const pb = document.createElement('div');
+    pb.className = 'progress';
+    pb.innerHTML = `<div class="progress-bar" id="progressBar"></div>`;
+    app.prepend(pb);
+    progressBar = document.getElementById('progressBar');
+  }
+  progressBar.style.width = percent + '%';
+  progressBar.setAttribute('aria-valuenow', percent);
+  progressBar.setAttribute('aria-valuemin', 0);
+  progressBar.setAttribute('aria-valuemax', 100);
+}
+
+function sanitizeInput(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderScreen(index) {
+  const screen = screens[index];
+  app.innerHTML = '';
+  const section = document.createElement('section');
+  section.className = 'card';
+  section.setAttribute('aria-labelledby', screen.id + '-title');
+  section.setAttribute('tabindex', '-1');
+  section.innerHTML = `<h2 id="${screen.id}-title">${screen.title}</h2>`;
+
+  updateProgressBar(index);
+
+  if (screen.content) {
+    const content = document.createElement('div');
+    content.innerHTML = screen.content;
+    section.appendChild(content);
+  }
+
+  if (screen.questions) {
+    screen.questions.forEach((question, i) => {
+      const qDiv = document.createElement('div');
+      qDiv.className = 'question';
+      qDiv.innerHTML = `
+        <label>${sanitizeInput(question)}</label><br />
+        ${[1, 2, 3, 4, 5].map(score => `
+          <label>
+            <input type="radio" name="${screen.id}_${i}" value="${score}" ${responses[screen.id] && responses[screen.id][i] == score ? 'checked' : ''} aria-label="Score ${score} for: ${sanitizeInput(question)}" /> ${score}
+          </label>
+        `).join(' ')}
+      `;
+      section.appendChild(qDiv);
+    });
+  }
+
+  // Navigation buttons
+  const nav = document.createElement('div');
+  nav.className = 'navigation';
+
+  // Previous
+  if (index > 0) {
+    const prev = document.createElement('button');
+    prev.innerText = 'Previous';
+    prev.onclick = () => {
+      renderScreen(index - 1);
+    };
+    nav.appendChild(prev);
+  }
+
+  // Next / Submit
+  const next = document.createElement('button');
+  next.innerText = index === screens.length - 1 ? 'Submit' : 'Next';
+  next.onclick = () => {
+    // Validate intro form fields
+    if (index === 0) {
+      const name = document.getElementById('name');
+      const contact = document.getElementById('contact');
+      const email = document.getElementById('email');
+      const date = document.getElementById('date');
+      const consent = document.getElementById('consent');
+      const errorDiv = document.getElementById('formError');
+      errorDiv.innerText = '';
+      if (!name.value.trim() || name.value.trim().length < 2) {
+        errorDiv.innerText = 'Please enter your full name (at least 2 characters).';
+        name.focus();
+        return;
+      }
+      if (!contact.value.match(/^\+?[0-9\-\s]{7,15}$/)) {
+        errorDiv.innerText = 'Please enter a valid contact number.';
+        contact.focus();
+        return;
+      }
+      if (!email.value.match(/^[^@]+@[^@]+\.[^@]+$/)) {
+        errorDiv.innerText = 'Please enter a valid email address.';
+        email.focus();
+        return;
+      }
+      if (!date.value) {
+        errorDiv.innerText = 'Please select the date of your assessment.';
+        date.focus();
+        return;
+      }
+      if (!consent.checked) {
+        errorDiv.innerText = 'Please provide consent to proceed.';
+        consent.focus();
+        return;
+      }
+      responses.user = {
+        name: sanitizeInput(name.value),
+        contact: sanitizeInput(contact.value),
+        email: sanitizeInput(email.value),
+        date: sanitizeInput(date.value)
+      };
+      userConsent = true;
+    }
+    // Validate radio questions
+    if (screen.questions) {
+      responses[screen.id] = [];
+      let missing = false;
+      screen.questions.forEach((_, i) => {
+        const val = document.querySelector(`input[name='${screen.id}_${i}']:checked`);
+        responses[screen.id].push(val ? parseInt(val.value) : 0);
+        if (!val) missing = true;
+      });
+      if (missing) {
+        alert('Please answer all questions before proceeding.');
+        return;
+      }
+    }
+    localStorage.setItem('rnavigator_responses', JSON.stringify(responses));
+    if (index === screens.length - 1) {
+      showResults();
+    } else {
+      renderScreen(index + 1);
+    }
+  };
+  nav.appendChild(next);
+
+  // Reset button (shows after form is started)
+  if (index > 0) {
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'resetBtn';
+    resetBtn.type = 'button';
+    resetBtn.innerText = 'Reset';
+    resetBtn.style.background = '#bbb';
+    resetBtn.onclick = () => {
+      if (confirm('Reset all your answers and start again?')) {
+        responses = {};
+        localStorage.removeItem('rnavigator_responses');
+        renderScreen(0);
+      }
+    };
+    nav.appendChild(resetBtn);
+  }
+
+  section.appendChild(nav);
+
+  // Feedback button
+  if (index === screens.length - 1) {
+    const feedbackBtn = document.createElement('button');
+    feedbackBtn.innerText = 'Feedback';
+    feedbackBtn.style.marginTop = '1em';
+    feedbackBtn.onclick = () => {
+      showFeedbackForm();
+    };
+    section.appendChild(feedbackBtn);
+  }
+
+  app.appendChild(section);
+  setFocusToFirstInput();
+}
+
+function interpretScore(domain, avg) {
+  const recommendations = {
+    Coping: {
+      High: 'Your coping capacity is strong. Continue to reinforce habits like mindfulness and routine.',
+      Moderate: 'Your coping skills are moderate. Strengthen regular self-care practices.',
+      Low: 'You may benefit from support in building emotional awareness and stress management.'
+    },
+    Adaptability: {
+      High: 'You have strong adaptability. Continue using challenges to grow.',
+      Moderate: 'Moderate adaptability. Consider strengthening your sense of purpose.',
+      Low: 'Build skills for problem-solving and seek support in transitions.'
+    },
+    Sensitivity: {
+      High: 'Your sensitivity to stress is well-regulated. Keep nurturing connections.',
+      Moderate: 'Moderate regulation. Practice boundaries and optimism regularly.',
+      Low: 'Work on support-seeking and emotional recovery practices.'
+    },
+    Exposure: {
+      High: 'You manage exposure well. Keep being intentional with your environments.',
+      Moderate: 'Moderate exposure control. Tune into energy-draining settings.',
+      Low: 'Reduce exposure to toxic inputs and set firm boundaries.'
+    },
+    Overall: {
+      High: 'High resilience: Keep challenging yourself and support others while maintaining self-care routines.',
+      Moderate: 'Moderate resilience: Focus on skill-building, expand your support network, and gradually challenge yourself.',
+      Low: 'Needs development: Start with self-awareness, build coping strategies, and seek support as needed.'
+    }
+  };
+  let level = avg >= 4 ? 'High' : avg >= 3 ? 'Moderate' : 'Low';
+  return recommendations[domain][level];
+}
+
+function showResults() {
+  const summary = document.createElement('section');
+  summary.className = 'card';
+  summary.setAttribute('aria-labelledby', 'results-title');
+  summary.innerHTML = '<h2 id="results-title">Your Results</h2>';
+  // User info
+  if (responses.user) {
+    summary.innerHTML += `<p><strong>Name:</strong> ${responses.user.name} <br>
+    <strong>Date:</strong> ${responses.user.date} <br>
+    <strong>Email:</strong> ${responses.user.email}</p>`;
+  }
+
+  let overallTotal = 0;
+  let domainAverages = [];
+  const labels = ['Coping', 'Adaptability', 'Sensitivity', 'Exposure'];
+
+  labels.forEach(label => {
+    const scores = responses[label.toLowerCase()] || [];
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length || 0;
+    overallTotal += avg;
+    domainAverages.push(avg);
+
+    const domainTitle = document.createElement('h3');
+    domainTitle.innerText = label;
+    summary.appendChild(domainTitle);
+
+    const rec = document.createElement('div');
+    rec.className = 'recommendation';
+    rec.innerText = interpretScore(label, avg);
+    summary.appendChild(rec);
+  });
+
+  const overallAvg = overallTotal / labels.length;
+  const overallRec = document.createElement('div');
+  overallRec.className = 'recommendation';
+  overallRec.innerHTML = `<strong>Overall Resilience:</strong> ${interpretScore('Overall', overallAvg)}`;
+  summary.appendChild(overallRec);
+
+  app.innerHTML = '';
+  app.appendChild(summary);
+
+  // Chart
+  setTimeout(() => renderChart(domainAverages, labels), 0);
+  document.getElementById('downloadChartBtn').style.display = 'inline-block';
+}
+
+function renderChart(data, labels) {
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Resilience Scores',
+        data: data,
+        fill: true,
+        backgroundColor: 'rgba(153, 153, 255, 0.2)',
+        borderColor: '#2a3990',
+        pointBackgroundColor: '#2a3990'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: true },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        r: {
+          suggestedMin: 1,
+          suggestedMax: 5,
+          pointLabels: { font: { size: 14 } }
+        }
+      }
+    }
+  });
+}
+
+// Download chart as image
+document.addEventListener('DOMContentLoaded', function () {
+  const downloadBtn = document.getElementById('downloadChartBtn');
+  if (downloadBtn) {
+    downloadBtn.onclick = function() {
+      const canvas = document.getElementById('radarChart');
+      const link = document.createElement('a');
+      link.download = 'resilience_radar_chart.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+  }
+});
+
+// Feedback form (simple modal)
+function showFeedbackForm() {
+  if (document.getElementById('feedbackModal')) return;
+  const modal = document.createElement('div');
+  modal.id = 'feedbackModal';
+  modal.style = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1000;';
+  modal.innerHTML = `
+    <div style="background:#fff;padding:2em;max-width:90vw;width:25em;border-radius:1em;box-shadow:0 2px 20px rgba(0,0,0,0.2);text-align:center;">
+      <h3>Feedback</h3>
+      <form id="feedbackForm" aria-label="Feedback form">
+        <textarea id="feedbackText" required aria-required="true" rows="4" style="width:100%;resize:vertical;" placeholder="Your feedback or issue..."></textarea><br>
+        <input type="email" id="feedbackEmail" placeholder="Your email (optional)" style="margin:0.5em 0;width:100%;" />
+        <br>
+        <button type="submit" style="margin-top:0.5em;">Send</button>
+        <button type="button" onclick="document.body.removeChild(document.getElementById('feedbackModal'))" style="margin-top:0.5em;background:#bbb;">Cancel</button>
+        <div id="feedbackError" class="error-message"></div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById('feedbackForm').onsubmit = function(e) {
+    e.preventDefault();
+    const text = sanitizeInput(document.getElementById('feedbackText').value);
+    if (text.length < 10) {
+      document.getElementById('feedbackError').innerText = 'Please enter at least 10 characters.';
+      return;
+    }
+    // Here you can send feedback to a server if desired
+    alert('Thank you for your feedback!');
+    document.body.removeChild(document.getElementById('feedbackModal'));
+  };
+}
+
+// Initial render
+renderScreen(current);
+
+// Accessibility: Focus to main on load
+window.onload = () => {
+  document.querySelector('main').focus();
+};
