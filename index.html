@@ -1,4 +1,3 @@
-<!-- Completed version of the Resilience Navigator code with corrections and full rendering logic -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,20 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resilience Navigator</title>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Performance: Load Chart.js asynchronously -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" async></script>
   <style>
+    :root {
+      --primary-bg: #f4f4f4;
+      --card-bg: #fff;
+      --accent: #2a3990;
+      --accent-light: #99f;
+      --accent-contrast: #fff;
+      --error: #c62828;
+      --success: #388e3c;
+      --font-main: Montserrat, Arial, sans-serif;
+    }
     body {
-      font-family: Montserrat, sans-serif;
+      font-family: var(--font-main);
       margin: 0;
       padding: 0;
-      background: #f4f4f4;
+      background: var(--primary-bg);
+      color: #222;
+      font-size: 1.1rem;
+      line-height: 1.7;
+    }
+    main {
+      min-height: 100vh;
     }
     .card {
-      background: #fff;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 600px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: var(--card-bg);
+      padding: 2em;
+      margin: 2em auto;
+      max-width: 90vw;
+      width: 38em;
+      border-radius: 1em;
+      box-shadow: 0 4px 12px rgba(42,57,144,0.07);
     }
     .hidden {
       display: none;
@@ -28,38 +46,116 @@
       margin-top: 0;
     }
     .question {
-      margin-bottom: 20px;
+      margin-bottom: 1.5em;
     }
     .navigation {
       display: flex;
       justify-content: space-between;
+      gap: 1em;
     }
-    .navigation button {
-      padding: 10px 20px;
+    .navigation button, #resetBtn {
+      padding: 0.7em 2em;
+      border: none;
+      border-radius: 0.5em;
+      background: var(--accent);
+      color: var(--accent-contrast);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.2s, color 0.2s;
+    }
+    .navigation button:hover, #resetBtn:hover {
+      background: var(--accent-light);
+      color: var(--accent);
     }
     .recommendation {
-      margin-top: 10px;
-      padding: 10px;
+      margin-top: 1em;
+      padding: 1em;
       background: #eef;
-      border-left: 5px solid #99f;
+      border-left: 5px solid var(--accent-light);
     }
     .bar {
-      height: 20px;
-      background: #99f;
-      margin-bottom: 5px;
+      height: 1.5em;
+      background: var(--accent-light);
+      margin-bottom: 0.4em;
+      border-radius: 0.4em;
     }
     .bar-label {
-      font-size: 14px;
-      margin-bottom: 4px;
+      font-size: 1em;
+      margin-bottom: 0.4em;
+    }
+    .progress {
+      background: #e0e0e0;
+      border-radius: 1em;
+      overflow: hidden;
+      margin-bottom: 1em;
+      height: 1em;
+      width: 100%;
+      position: relative;
+    }
+    .progress-bar {
+      background: var(--accent);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s;
+    }
+    .error-message {
+      color: var(--error);
+      font-size: 1em;
+      margin-top: 0.5em;
+    }
+    label[for] {
+      font-weight: 600;
+    }
+    input[type="text"], input[type="email"], input[type="date"] {
+      font-size: 1em;
+      margin: 0.2em 0 0.8em 0;
+      padding: 0.4em;
+      width: 95%;
+      border-radius: 0.3em;
+      border: 1px solid #bbb;
+    }
+    @media (max-width: 600px) {
+      .card {
+        padding: 1em;
+        margin: 1em;
+        max-width: 100vw;
+        width: 98vw;
+      }
+      .navigation {
+        flex-direction: column;
+        gap: 0.5em;
+      }
+      #radarChart {
+        width: 100vw !important;
+        height: 250px !important;
+      }
     }
   </style>
 </head>
 <body>
-  <div id="app"></div>
-  <canvas id="radarChart" width="400" height="300" style="display: block; margin: 0 auto;"></canvas>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <main role="main" aria-labelledby="app-title">
+    <section id="app"></section>
+    <section aria-label="Radar Chart and Actions" style="text-align:center;">
+      <canvas id="radarChart" width="400" height="300" style="display:block;margin: 0 auto;" aria-label="Radar chart showing resilience scores"></canvas>
+      <div>
+        <button id="downloadChartBtn" style="display:none;margin-top: 1em;">Download Chart</button>
+      </div>
+    </section>
+  </main>
+
   <script>
+    // Accessibility: Focus management helper
+    function setFocusToFirstInput() {
+      const firstInput = document.querySelector('input:not([type=radio]):not([type=checkbox])');
+      if (firstInput) firstInput.focus();
+    }
+
     const app = document.getElementById('app');
+    let chartInstance = null;
+    let progress = 0;
+    let userConsent = false;
+
+    // Step indicators for progress bar
     const screens = [
       {
         id: 'intro',
@@ -68,13 +164,22 @@
           <p>Assess and enhance your personal resilience. Rate each statement below based on how true it has been for you in the past month.</p>
           <p>This tool covers the four CASE domains: Coping Capacity, Adaptability, Sensitivity Reduction, and Exposure Control.</p>
           <p><strong>Scoring:</strong> 1 = Strongly Disagree | 5 = Strongly Agree</p>
-          <p>This is not a diagnosis. For professional help, click <a href='https://aiwaapp.ai/site/12436/book-appointment' target='_blank'>HERE</a>.</p>
-          <p>View our <a href='https://aiwaapp.ai/site/12436/privacy-policy' target='_blank'>Privacy Policy</a></p>
+          <p>This is not a diagnosis. For professional help, click <a href='https://aiwaapp.ai/site/12436/book-appointment' target='_blank' rel="noopener">HERE</a>.</p>
+          <p>View our <a href='https://aiwaapp.ai/site/12436/privacy-policy' target='_blank' rel="noopener">Privacy Policy</a></p>
           <div class="question">
-            <label>Full Name: <input type="text" id="name" /></label><br /><br />
-            <label>Contact Number: <input type="text" id="contact" /></label><br /><br />
-            <label>Email Address: <input type="email" id="email" /></label><br /><br />
-            <label>Date of Self-Assessment: <input type="date" id="date" /></label>
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" autocomplete="name" required minlength="2" aria-required="true" />
+            <label for="contact">Contact Number:</label>
+            <input type="text" id="contact" name="contact" pattern="^\\+?[0-9\\-\\s]{7,15}$" required aria-required="true" autocomplete="tel" />
+            <label for="email">Email Address:</label>
+            <input type="email" id="email" name="email" autocomplete="email" required aria-required="true" />
+            <label for="date">Date of Self-Assessment:</label>
+            <input type="date" id="date" name="date" required aria-required="true" />
+            <div>
+              <input type="checkbox" id="consent" name="consent" required aria-required="true" />
+              <label for="consent">I consent to the processing of my data as described in the Privacy Policy.</label>
+            </div>
+            <div id="formError" class="error-message" role="alert" aria-live="polite"></div>
           </div>`
       },
       {
@@ -129,21 +234,46 @@
     ];
 
     let current = 0;
-    const responses = {};
+    let responses = JSON.parse(localStorage.getItem('rnavigator_responses') || '{}') || {};
+
+    function updateProgressBar(index) {
+      const total = screens.length - 1; // exclude summary
+      const percent = Math.min(100, Math.round((index / total) * 100));
+      let progressBar = document.getElementById('progressBar');
+      if (!progressBar) {
+        const pb = document.createElement('div');
+        pb.className = 'progress';
+        pb.innerHTML = `<div class="progress-bar" id="progressBar"></div>`;
+        app.prepend(pb);
+        progressBar = document.getElementById('progressBar');
+      }
+      progressBar.style.width = percent + '%';
+      progressBar.setAttribute('aria-valuenow', percent);
+      progressBar.setAttribute('aria-valuemin', 0);
+      progressBar.setAttribute('aria-valuemax', 100);
+    }
+
+    function sanitizeInput(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
 
     function renderScreen(index) {
       const screen = screens[index];
       app.innerHTML = '';
-      const card = document.createElement('div');
-      card.className = 'card';
-      const title = document.createElement('h2');
-      title.innerText = screen.title;
-      card.appendChild(title);
+      const section = document.createElement('section');
+      section.className = 'card';
+      section.setAttribute('aria-labelledby', screen.id + '-title');
+      section.setAttribute('tabindex', '-1');
+      section.innerHTML = `<h2 id="${screen.id}-title">${screen.title}</h2>`;
+
+      updateProgressBar(index);
 
       if (screen.content) {
         const content = document.createElement('div');
         content.innerHTML = screen.content;
-        card.appendChild(content);
+        section.appendChild(content);
       }
 
       if (screen.questions) {
@@ -151,34 +281,92 @@
           const qDiv = document.createElement('div');
           qDiv.className = 'question';
           qDiv.innerHTML = `
-            <label>${question}</label><br />
+            <label>${sanitizeInput(question)}</label><br />
             ${[1, 2, 3, 4, 5].map(score => `
-              <label><input type="radio" name="${screen.id}_${i}" value="${score}" /> ${score}</label>
+              <label>
+                <input type="radio" name="${screen.id}_${i}" value="${score}" ${responses[screen.id] && responses[screen.id][i] == score ? 'checked' : ''} aria-label="Score ${score} for: ${sanitizeInput(question)}" /> ${score}
+              </label>
             `).join(' ')}
           `;
-          card.appendChild(qDiv);
+          section.appendChild(qDiv);
         });
       }
 
+      // Navigation buttons
       const nav = document.createElement('div');
       nav.className = 'navigation';
+
+      // Previous
       if (index > 0) {
         const prev = document.createElement('button');
         prev.innerText = 'Previous';
-        prev.onclick = () => renderScreen(index - 1);
+        prev.onclick = () => {
+          renderScreen(index - 1);
+        };
         nav.appendChild(prev);
       }
 
+      // Next / Submit
       const next = document.createElement('button');
       next.innerText = index === screens.length - 1 ? 'Submit' : 'Next';
       next.onclick = () => {
+        // Validate intro form fields
+        if (index === 0) {
+          const name = document.getElementById('name');
+          const contact = document.getElementById('contact');
+          const email = document.getElementById('email');
+          const date = document.getElementById('date');
+          const consent = document.getElementById('consent');
+          const errorDiv = document.getElementById('formError');
+          errorDiv.innerText = '';
+          if (!name.value.trim() || name.value.trim().length < 2) {
+            errorDiv.innerText = 'Please enter your full name (at least 2 characters).';
+            name.focus();
+            return;
+          }
+          if (!contact.value.match(/^\+?[0-9\-\s]{7,15}$/)) {
+            errorDiv.innerText = 'Please enter a valid contact number.';
+            contact.focus();
+            return;
+          }
+          if (!email.value.match(/^[^@]+@[^@]+\.[^@]+$/)) {
+            errorDiv.innerText = 'Please enter a valid email address.';
+            email.focus();
+            return;
+          }
+          if (!date.value) {
+            errorDiv.innerText = 'Please select the date of your assessment.';
+            date.focus();
+            return;
+          }
+          if (!consent.checked) {
+            errorDiv.innerText = 'Please provide consent to proceed.';
+            consent.focus();
+            return;
+          }
+          responses.user = {
+            name: sanitizeInput(name.value),
+            contact: sanitizeInput(contact.value),
+            email: sanitizeInput(email.value),
+            date: sanitizeInput(date.value)
+          };
+          userConsent = true;
+        }
+        // Validate radio questions
         if (screen.questions) {
           responses[screen.id] = [];
+          let missing = false;
           screen.questions.forEach((_, i) => {
             const val = document.querySelector(`input[name='${screen.id}_${i}']:checked`);
             responses[screen.id].push(val ? parseInt(val.value) : 0);
+            if (!val) missing = true;
           });
+          if (missing) {
+            alert('Please answer all questions before proceeding.');
+            return;
+          }
         }
+        localStorage.setItem('rnavigator_responses', JSON.stringify(responses));
         if (index === screens.length - 1) {
           showResults();
         } else {
@@ -186,8 +374,39 @@
         }
       };
       nav.appendChild(next);
-      card.appendChild(nav);
-      app.appendChild(card);
+
+      // Reset button (shows after form is started)
+      if (index > 0) {
+        const resetBtn = document.createElement('button');
+        resetBtn.id = 'resetBtn';
+        resetBtn.type = 'button';
+        resetBtn.innerText = 'Reset';
+        resetBtn.style.background = '#bbb';
+        resetBtn.onclick = () => {
+          if (confirm('Reset all your answers and start again?')) {
+            responses = {};
+            localStorage.removeItem('rnavigator_responses');
+            renderScreen(0);
+          }
+        };
+        nav.appendChild(resetBtn);
+      }
+
+      section.appendChild(nav);
+
+      // Feedback button
+      if (index === screens.length - 1) {
+        const feedbackBtn = document.createElement('button');
+        feedbackBtn.innerText = 'Feedback';
+        feedbackBtn.style.marginTop = '1em';
+        feedbackBtn.onclick = () => {
+          showFeedbackForm();
+        };
+        section.appendChild(feedbackBtn);
+      }
+
+      app.appendChild(section);
+      setFocusToFirstInput();
     }
 
     function interpretScore(domain, avg) {
@@ -218,15 +437,21 @@
           Low: 'Needs development: Start with self-awareness, build coping strategies, and seek support as needed.'
         }
       };
-
       let level = avg >= 4 ? 'High' : avg >= 3 ? 'Moderate' : 'Low';
       return recommendations[domain][level];
     }
 
     function showResults() {
-      const summary = document.createElement('div');
+      const summary = document.createElement('section');
       summary.className = 'card';
-      summary.innerHTML = '<h2>Your Results</h2>';
+      summary.setAttribute('aria-labelledby', 'results-title');
+      summary.innerHTML = '<h2 id="results-title">Your Results</h2>';
+      // User info
+      if (responses.user) {
+        summary.innerHTML += `<p><strong>Name:</strong> ${responses.user.name} <br>
+        <strong>Date:</strong> ${responses.user.date} <br>
+        <strong>Email:</strong> ${responses.user.email}</p>`;
+      }
 
       let overallTotal = 0;
       let domainAverages = [];
@@ -257,31 +482,93 @@
       app.innerHTML = '';
       app.appendChild(summary);
 
-      new Chart(document.getElementById('radarChart'), {
+      // Chart
+      setTimeout(() => renderChart(domainAverages, labels), 0);
+      document.getElementById('downloadChartBtn').style.display = 'inline-block';
+    }
+
+    function renderChart(data, labels) {
+      const ctx = document.getElementById('radarChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
         type: 'radar',
         data: {
           labels: labels,
           datasets: [{
             label: 'Resilience Scores',
-            data: domainAverages,
+            data: data,
             fill: true,
             backgroundColor: 'rgba(153, 153, 255, 0.2)',
-            borderColor: '#99f',
-            pointBackgroundColor: '#99f'
+            borderColor: '#2a3990',
+            pointBackgroundColor: '#2a3990'
           }]
         },
         options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: { enabled: true }
+          },
           scales: {
             r: {
               suggestedMin: 1,
-              suggestedMax: 5
+              suggestedMax: 5,
+              pointLabels: { font: { size: 14 } }
             }
           }
         }
       });
     }
 
+    // Download chart as image
+    document.getElementById('downloadChartBtn').onclick = function() {
+      const canvas = document.getElementById('radarChart');
+      const link = document.createElement('a');
+      link.download = 'resilience_radar_chart.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+
+    // Feedback form (simple modal)
+    function showFeedbackForm() {
+      if (document.getElementById('feedbackModal')) return;
+      const modal = document.createElement('div');
+      modal.id = 'feedbackModal';
+      modal.style = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;z-index:1000;';
+      modal.innerHTML = `
+        <div style="background:#fff;padding:2em;max-width:90vw;width:25em;border-radius:1em;box-shadow:0 2px 20px rgba(0,0,0,0.2);text-align:center;">
+          <h3>Feedback</h3>
+          <form id="feedbackForm" aria-label="Feedback form">
+            <textarea id="feedbackText" required aria-required="true" rows="4" style="width:100%;resize:vertical;" placeholder="Your feedback or issue..."></textarea><br>
+            <input type="email" id="feedbackEmail" placeholder="Your email (optional)" style="margin:0.5em 0;width:100%;" />
+            <br>
+            <button type="submit" style="margin-top:0.5em;">Send</button>
+            <button type="button" onclick="document.body.removeChild(document.getElementById('feedbackModal'))" style="margin-top:0.5em;background:#bbb;">Cancel</button>
+            <div id="feedbackError" class="error-message"></div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      document.getElementById('feedbackForm').onsubmit = function(e) {
+        e.preventDefault();
+        const text = sanitizeInput(document.getElementById('feedbackText').value);
+        if (text.length < 10) {
+          document.getElementById('feedbackError').innerText = 'Please enter at least 10 characters.';
+          return;
+        }
+        // Here you can send feedback to a server if desired
+        alert('Thank you for your feedback!');
+        document.body.removeChild(document.getElementById('feedbackModal'));
+      };
+    }
+
+    // Initial render
     renderScreen(current);
+
+    // Accessibility: Focus to main on load
+    window.onload = () => {
+      document.querySelector('main').focus();
+    };
   </script>
 </body>
 </html>
