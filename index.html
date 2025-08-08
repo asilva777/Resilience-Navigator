@@ -1,34 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Resilience Navigator</title>
+    <meta charset="UTF-8">
+    <title>Resilience Navigator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Oswald:400,600|Montserrat:400,700|Roboto+Condensed:400,700&display=swap" rel="stylesheet">
+
+  <!-- OG meta tags for sharing -->
+  <meta property="og:title" content="Resilience Navigator">
+  <meta property="og:description" content="Assess and enhance your personal resilience.">
+  <link rel="icon" type="image" href="https://appimize.app/assets/apps/user_1097/images/20aa97ab307c_945_1097.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://cognitio-plus.aiwaapp.live/resilience-navigator">
+  <meta property="og:image" content="https://appimize.app/assets/apps/user_1097/images/5d47423db4ac_786_1097.png">
   <link rel="stylesheet" href="styles.css" />
   <!-- Performance: Load Chart.js asynchronously -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js" async></script>
   <style>
     :root {
-      --primary-bg: #f4f4f4;
-      --card-bg: #fff;
-      --accent: #2a3990;
-      --accent-light: #99f;
-      --accent-contrast: #fff;
-      --error: #c62828;
-      --success: #388e3c;
-      --font-main: Montserrat, Arial, sans-serif;
+      --primary: #b425aa;
+      --accent: #f3e329;
+      --secondary: #c80ec9;
+      --white: #fff;
+      --gray-bg: #f4f6f9;
+      --shadow: 0 0 12px rgba(0,0,0,0.08);
+      --danger: #d70e3d;
+      --success: #23b425;
+      --warning: #e6a500;
     }
-    body {
-      font-family: var(--font-main);
+    html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      background: var(--primary-bg);
+      background: var(--gray-bg);
+      font-family: 'Montserrat', 'Roboto Condensed', 'Oswald', Arial, sans-serif;
+      font-size: 16px;
+    }
+    .skip-link {
+      position: absolute;
+      left: -999px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      z-index: 100;
+      background: var(--accent);
       color: #222;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .skip-link:focus {
+      left: 10px;
+      top: 10px;
+      width: auto;
+      height: auto;
       font-size: 1.1rem;
-      line-height: 1.7;
+      outline: 2px solid var(--primary);
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: linear-gradient(90deg, var(--primary), var(--secondary) 70%);
+      color: var(--white);
+      padding: 2rem 1rem 1.4rem 1rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+    header h1 {
+      font-family: 'Oswald', Arial, sans-serif;
+      font-size: 2.3rem;
+      margin: 0;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+    header p {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0.5rem auto 0 auto;
+      font-size: 1.1rem;
+      max-width: 820px;
+      line-height: 1.5;
     }
     main {
-      min-height: 100vh;
+      max-width: 900px;
+      margin: 2.5rem auto 2rem auto;
+      background: var(--white);
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      padding: 2.5rem 2rem 2rem 2rem;
+      font-family: 'Montserrat', 'Roboto Condensed', sans-serif;
+    }
+    h2 {
+      color: var(--primary);
+      font-family: 'Oswald', sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-top: 0;
+      margin-bottom: 1.4rem;
+    }
+    h3 {
+      color: var(--secondary);
+      font-family: 'Montserrat', sans-serif;
+      margin-top: 1.5rem;
+      margin-bottom: 0.6rem;
+    }
+    .section {
+      margin-bottom: 2rem;
+    }
+    label, .form-label {
+      font-family: 'Montserrat', Arial, sans-serif;
+      font-weight: 500;
+      color: #222;
+      display: block;
+      margin: 0.7rem 0 0.25rem 0;
+    }
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.6rem;
+    }
+    .form-row > div {
+      flex: 1;
+      min-width: 140px;
     }
     .card {
       background: var(--card-bg);
