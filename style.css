@@ -1,15 +1,15 @@
 :root {
-  --primary-bg: #f4f4f4;
-  --primary-bg-dark: #23272f;
-  --card-bg: #fff;
-  --card-bg-dark: #23272f;
-  --accent: #2a3990;
-  --accent-light: #99f;
-  --accent-contrast: #fff;
-  --accent-dark: #4158d0;
+  --primary-bg: #b425aa;
+  --primary-bg-dark: #c80ec9;
+  --card-bg: #ffffff;
+  --card-bg-dark: #b425aa;
+  --accent: #f3e329;
+  --accent-light: #f3e329;
+  --accent-contrast: #ffffff;
+  --accent-dark: #b425aa;
   --error: #c62828;
   --success: #388e3c;
-  --font-main: 'Montserrat', Arial, sans-serif;
+  --font-main: 'Montserrat', Roboto, sans-serif;
   --shadow: 0 4px 12px rgba(42,57,144,0.07);
   --border-radius: 1em;
   --transition: 0.2s cubic-bezier(.4,0,.2,1);
@@ -19,7 +19,7 @@
   :root {
     --primary-bg: var(--primary-bg-dark);
     --card-bg: var(--card-bg-dark);
-    --accent-contrast: #fff;
+    --accent-contrast: #fffff;
     --shadow: 0 4px 16px rgba(0,0,0,0.18);
   }
 }
@@ -306,3 +306,6 @@ canvas#radarChart {
   background: var(--accent-light);
   color: var(--accent);
 }
+
+
+
